@@ -1,0 +1,50 @@
+version: "3.9"
+services:
+  gateway:
+    image: nginx:latest
+    container_name: gateway
+    ports:
+      - "80:80"
+    volumes:
+      - ./gateway/nginx.conf:/etc/nginx/nginx.conf:ro
+      - frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - frontend
+      - backend
+      - ai-service
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    volumes:
+      - frontend:/usr/share/nginx/html:ro
+  backend:
+    build: ./backend
+    container_name: backend
+    ports:
+      - "5000:5000"
+    environment:
+      - DB_HOST=db
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=srinivas
+      - DB_PORT=5432
+    depends_on:
+      - db
+  ai-service:
+    build: ./ai-service
+    container_name: ai-service
+    ports:
+      - "6000:6000"
+  db:
+   image: postgres:15
+   container_name: db
+   environment:
+     POSTGRES_USER: postgres
+     POSTGRES_PASSWORD: postgres
+     POSTGRES_DB: database
+   volumes:
+     - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+     - db:/var/lib/postgresql/data
+volumes:
+  db:
+  frontend:
